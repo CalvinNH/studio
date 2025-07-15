@@ -21,6 +21,14 @@ export function PomodoroTimer() {
 
   const synth = useRef<Synth | null>(null);
 
+  const handleReset = useCallback(() => {
+    setIsActive(false);
+    setIsFinished(false);
+    setMode("work");
+    setCurrentSession(1);
+    setSecondsLeft(workMinutes * 60);
+  }, [workMinutes]);
+
   const initializeAudio = useCallback(async () => {
     if (!synth.current) {
       const { Synth: ToneSynth } = await import("tone");
@@ -32,18 +40,10 @@ export function PomodoroTimer() {
     synth.current?.triggerAttackRelease("G5", "0.5");
   }, []);
 
-  const handleReset = useCallback(() => {
-    setIsActive(false);
-    setIsFinished(false);
-    setMode("work");
-    setCurrentSession(1);
-    setSecondsLeft(workMinutes * 60);
-  }, [workMinutes]);
-
   useEffect(() => {
     if (!isActive) return;
 
-    if (secondsLeft === 0) {
+    if (secondsLeft <= 0) {
       playSound();
       
       if (mode === "work") {
@@ -138,7 +138,7 @@ export function PomodoroTimer() {
                     fill="transparent"
                 />
                 <circle
-                    className={cn("transition-all duration-1000", {
+                    className={cn("transition-all duration-1000 linear", {
                         "stroke-primary": mode === 'work',
                         "stroke-accent": mode === 'break'
                     })}
@@ -149,7 +149,7 @@ export function PomodoroTimer() {
                     fill="transparent"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
-                    transform="rotate(-90 40 40)"
+                    transform="rotate(-90 40 40) scale(1, -1) translate(0, -80)"
                     style={{ strokeLinecap: 'round' }}
                 />
             </svg>

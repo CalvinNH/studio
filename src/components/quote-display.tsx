@@ -50,7 +50,7 @@ export function QuoteDisplay() {
 
   if (isLoading) {
     return (
-      <div className="flex w-full flex-col items-center gap-2 text-center">
+      <div className="flex h-16 w-full flex-col items-center justify-center gap-2 text-center">
         <Skeleton className="h-5 w-full max-w-lg" />
         <Skeleton className="h-4 w-1/4" />
       </div>
@@ -58,7 +58,7 @@ export function QuoteDisplay() {
   }
 
   return (
-    <div key={currentQuote?.quote} className="min-h-[4rem] animate-in fade-in duration-1000 w-full max-w-lg">
+    <div key={currentQuote?.quote} className="h-16 animate-in fade-in duration-1000 w-full max-w-lg flex flex-col justify-center">
       <blockquote className="text-center">
         <p className="text-sm italic text-foreground md:text-base truncate">
           "{currentQuote?.quote}"
