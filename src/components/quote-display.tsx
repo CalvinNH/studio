@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -50,7 +51,7 @@ export function QuoteDisplay() {
 
   if (isLoading) {
     return (
-      <div className="flex h-16 w-full flex-col items-center justify-center gap-2 text-center">
+      <div className="flex h-24 w-full flex-col items-center justify-center gap-2 text-center">
         <Skeleton className="h-5 w-full max-w-lg" />
         <Skeleton className="h-4 w-1/4" />
       </div>
@@ -58,12 +59,12 @@ export function QuoteDisplay() {
   }
 
   return (
-    <div key={currentQuote?.quote} className="h-16 animate-in fade-in duration-1000 w-full max-w-lg flex flex-col justify-center">
+    <div key={currentQuote?.quote} className="h-24 animate-in fade-in duration-1000 w-full max-w-lg flex flex-col justify-center">
       <blockquote className="text-center">
-        <p className="text-sm italic text-foreground md:text-base truncate">
+        <p className="text-sm italic text-foreground/90">
           "{currentQuote?.quote}"
         </p>
-        <footer className="mt-1 text-xs text-muted-foreground">
+        <footer className="mt-2 text-xs text-muted-foreground">
           &mdash; {currentQuote?.author}
         </footer>
       </blockquote>
