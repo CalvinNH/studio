@@ -16,9 +16,16 @@ const fallbackQuote: MotivationalQuoteOutput = {
 export function QuoteDisplay() {
   const [currentQuote, setCurrentQuote] = useState<MotivationalQuoteOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [randomTopic, setRandomTopic] = useState("");
+
+  useEffect(() => {
+    // This effect runs only once on the client after hydration
+    setRandomTopic(topics[Math.floor(Math.random() * topics.length)]);
+  }, []);
 
   const fetchQuote = useCallback(async () => {
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+    if (!randomTopic) return;
+    setIsLoading(true);
     try {
       const result = await generateMotivationalQuote({ topic: randomTopic });
       setCurrentQuote(result);
@@ -28,30 +35,35 @@ export function QuoteDisplay() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [randomTopic]);
 
   useEffect(() => {
     fetchQuote();
-    const intervalId = setInterval(fetchQuote, 5000);
-    return () => clearInterval(intervalId);
   }, [fetchQuote]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+        setRandomTopic(topics[Math.floor(Math.random() * topics.length)]);
+    }, 5000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   if (isLoading) {
     return (
       <div className="flex w-full flex-col items-center gap-2 text-center">
-        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-5 w-full max-w-lg" />
         <Skeleton className="h-4 w-1/4" />
       </div>
     );
   }
 
   return (
-    <div key={currentQuote?.quote} className="min-h-[6rem] animate-in fade-in duration-1000">
+    <div key={currentQuote?.quote} className="min-h-[4rem] animate-in fade-in duration-1000 w-full max-w-lg">
       <blockquote className="text-center">
-        <p className="text-lg italic text-foreground md:text-xl">
+        <p className="text-sm italic text-foreground md:text-base truncate">
           "{currentQuote?.quote}"
         </p>
-        <footer className="mt-2 text-base text-muted-foreground">
+        <footer className="mt-1 text-xs text-muted-foreground">
           &mdash; {currentQuote?.author}
         </footer>
       </blockquote>

@@ -32,6 +32,14 @@ export function PomodoroTimer() {
     synth.current?.triggerAttackRelease("G5", "0.5");
   }, []);
 
+  const handleReset = useCallback(() => {
+    setIsActive(false);
+    setIsFinished(false);
+    setMode("work");
+    setCurrentSession(1);
+    setSecondsLeft(workMinutes * 60);
+  }, [workMinutes]);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -74,19 +82,14 @@ export function PomodoroTimer() {
 
   const handleStartPause = useCallback(async () => {
     await initializeAudio();
-    setIsActive((prev) => !prev);
     if(isFinished) {
       handleReset();
+      setIsActive(true);
+    } else {
+      setIsActive((prev) => !prev);
     }
-  }, [isFinished]);
-
-  const handleReset = useCallback(() => {
-    setIsActive(false);
-    setIsFinished(false);
-    setMode("work");
-    setCurrentSession(1);
-    setSecondsLeft(workMinutes * 60);
-  }, [workMinutes]);
+  }, [isFinished, handleReset, initializeAudio]);
+  
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -108,6 +111,13 @@ export function PomodoroTimer() {
       </div>
     </div>
   );
+  
+  const totalSeconds = (mode === 'work' ? workMinutes : breakMinutes) * 60;
+  const progress = totalSeconds > 0 ? (secondsLeft / totalSeconds) : 0;
+
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <Card className="w-full max-w-md shadow-lg">
@@ -117,13 +127,35 @@ export function PomodoroTimer() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6">
-        <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-8 border-muted">
-          <div className={cn("absolute inset-0 rounded-full border-8 border-primary transition-all duration-1000", {
-            "border-accent": mode === 'break'
-          })} style={{ clipPath: `inset(0 ${100 - (secondsLeft / ((mode === 'work' ? workMinutes : breakMinutes) * 60)) * 100}% 0 0)` }} />
-          <span className="text-5xl font-bold tracking-tighter text-foreground">
-            {formatTime(secondsLeft)}
-          </span>
+        <div className="relative flex h-48 w-48 items-center justify-center">
+            <svg className="absolute h-full w-full" viewBox="0 0 80 80">
+                <circle
+                    className="stroke-muted"
+                    cx="40"
+                    cy="40"
+                    r={radius}
+                    strokeWidth="8"
+                    fill="transparent"
+                />
+                <circle
+                    className={cn("transition-all duration-1000", {
+                        "stroke-primary": mode === 'work',
+                        "stroke-accent": mode === 'break'
+                    })}
+                    cx="40"
+                    cy="40"
+                    r={radius}
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    transform="rotate(-90 40 40)"
+                    style={{ strokeLinecap: 'round' }}
+                />
+            </svg>
+            <span className="text-5xl font-bold tracking-tighter text-foreground">
+                {formatTime(secondsLeft)}
+            </span>
         </div>
         
         <div className="flex items-center justify-center gap-2">

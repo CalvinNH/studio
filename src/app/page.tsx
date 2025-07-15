@@ -8,9 +8,6 @@ export default function Home() {
         <QuoteDisplay />
         <PomodoroTimer />
       </main>
-      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        <p>Built for Focus. Powered by You.</p>
-      </footer>
     </div>
   );
 }
