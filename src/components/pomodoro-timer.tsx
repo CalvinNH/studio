@@ -70,14 +70,28 @@ export function PomodoroTimer() {
   }, [isActive, secondsLeft, mode, currentSession, sessionCount, workMinutes, breakMinutes, playSound]);
 
   useEffect(() => {
-    if (!isActive) {
-      setSecondsLeft(mode === 'work' ? workMinutes * 60 : breakMinutes * 60);
+    if (isActive) return;
+    if (mode === 'work') {
+      setSecondsLeft(workMinutes * 60);
+    } else {
+      setSecondsLeft(breakMinutes * 60);
     }
-  }, [workMinutes, breakMinutes, mode, isActive]);
+  // This effect should only run when the durations are changed while paused
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workMinutes, breakMinutes]);
 
   const handleSettingChange = (setter: React.Dispatch<React.SetStateAction<number>>, value: number, min: number, max: number) => {
     if (isActive) return;
-    setter(prev => Math.max(min, Math.min(max, prev + value)));
+    
+    setter(prev => {
+        const newValue = prev + value;
+        // For sessionCount, ensure it doesn't go below the current session
+        if (setter === setSessionCount) {
+            const minAllowed = currentSession > 1 ? currentSession : min;
+            return Math.max(minAllowed, Math.min(max, newValue));
+        }
+        return Math.max(min, Math.min(max, newValue));
+    });
   };
 
   const handleStartPause = useCallback(async () => {
@@ -97,27 +111,30 @@ export function PomodoroTimer() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const SettingControl = ({ label, value, onDecrement, onIncrement }: { label: string, value: number, onDecrement: () => void, onIncrement: () => void }) => (
-    <div className="flex w-full items-center justify-between">
-      <span className="text-muted-foreground">{label}</span>
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onDecrement} disabled={isActive}>
-          <Minus className="h-4 w-4" />
-        </Button>
-        <span className="w-12 text-center text-lg font-medium">{value}</span>
-        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onIncrement} disabled={isActive}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
+  const SettingControl = ({ label, value, onDecrement, onIncrement, min, max }: { label: string, value: number, onDecrement: () => void, onIncrement: () => void, min: number, max: number }) => {
+    const minAllowed = label === "Sessions" && currentSession > 1 ? currentSession : min;
+    return (
+        <div className="flex w-full items-center justify-between">
+          <span className="text-muted-foreground">{label}</span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onDecrement} disabled={isActive || value <= minAllowed}>
+              <Minus className="h-4 w-4" />
+            </Button>
+            <span className="w-12 text-center text-lg font-medium">{value}</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={onIncrement} disabled={isActive || value >= max}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+    );
+  }
   
   const totalSeconds = (mode === 'work' ? workMinutes : breakMinutes) * 60;
   const progress = totalSeconds > 0 ? (secondsLeft / totalSeconds) : 0;
 
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - progress);
+  const strokeDashoffset = circumference * progress;
 
   return (
     <Card className="w-full max-w-md shadow-lg">
@@ -138,7 +155,7 @@ export function PomodoroTimer() {
                     fill="transparent"
                 />
                 <circle
-                    className={cn("transition-all duration-1000 linear", {
+                    className={cn("transition-stroke-dashoffset duration-300 ease-linear", {
                         "stroke-primary": mode === 'work',
                         "stroke-accent": mode === 'break'
                     })}
@@ -149,7 +166,7 @@ export function PomodoroTimer() {
                     fill="transparent"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
-                    transform="rotate(-90 40 40) scale(1, -1) translate(0, -80)"
+                    transform="rotate(-90 40 40)"
                     style={{ strokeLinecap: 'round' }}
                 />
             </svg>
@@ -190,9 +207,9 @@ export function PomodoroTimer() {
         <Separator />
 
         <div className="flex w-full flex-col gap-2">
-          <SettingControl label="Work Duration" value={workMinutes} onDecrement={() => handleSettingChange(setWorkMinutes, -1, 1, 60)} onIncrement={() => handleSettingChange(setWorkMinutes, 1, 1, 60)} />
-          <SettingControl label="Break Duration" value={breakMinutes} onDecrement={() => handleSettingChange(setBreakMinutes, -1, 1, 30)} onIncrement={() => handleSettingChange(setBreakMinutes, 1, 1, 30)} />
-          <SettingControl label="Sessions" value={sessionCount} onDecrement={() => handleSettingChange(setSessionCount, -1, 1, 12)} onIncrement={() => handleSettingChange(setSessionCount, 1, 1, 12)} />
+          <SettingControl label="Work Duration" value={workMinutes} onDecrement={() => handleSettingChange(setWorkMinutes, -1, 1, 60)} onIncrement={() => handleSettingChange(setWorkMinutes, 1, 1, 60)} min={1} max={60} />
+          <SettingControl label="Break Duration" value={breakMinutes} onDecrement={() => handleSettingChange(setBreakMinutes, -1, 1, 30)} onIncrement={() => handleSettingChange(setBreakMinutes, 1, 1, 30)} min={1} max={30} />
+          <SettingControl label="Sessions" value={sessionCount} onDecrement={() => handleSettingChange(setSessionCount, -1, 1, 12)} onIncrement={() => handleSettingChange(setSessionCount, 1, 1, 12)} min={1} max={12} />
         </div>
       </CardContent>
     </Card>
