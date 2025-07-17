@@ -29,6 +29,15 @@ export function PomodoroTimer() {
     setSecondsLeft(workMinutes * 60);
   }, [workMinutes]);
 
+  useEffect(() => {
+    if (isActive) return;
+    if (mode === 'work') {
+      setSecondsLeft(workMinutes * 60);
+    } else {
+      setSecondsLeft(breakMinutes * 60);
+    }
+  }, [workMinutes, breakMinutes, isActive, mode]);
+  
   const initializeAudio = useCallback(async () => {
     if (!synth.current) {
       const { Synth: ToneSynth } = await import("tone");
@@ -68,17 +77,6 @@ export function PomodoroTimer() {
 
     return () => clearInterval(interval);
   }, [isActive, secondsLeft, mode, currentSession, sessionCount, workMinutes, breakMinutes, playSound]);
-
-  useEffect(() => {
-    if (isActive) return;
-    if (mode === 'work') {
-      setSecondsLeft(workMinutes * 60);
-    } else {
-      setSecondsLeft(breakMinutes * 60);
-    }
-  // This effect should only run when the durations are changed while paused
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workMinutes, breakMinutes]);
 
   const handleSettingChange = (setter: React.Dispatch<React.SetStateAction<number>>, value: number, min: number, max: number) => {
     if (isActive) return;
@@ -130,11 +128,11 @@ export function PomodoroTimer() {
   }
   
   const totalSeconds = (mode === 'work' ? workMinutes : breakMinutes) * 60;
-  const progress = totalSeconds > 0 ? (secondsLeft / totalSeconds) : 0;
+  const progress = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) : 0;
 
   const radius = 36;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * progress;
+  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <Card className="w-full max-w-md shadow-lg">
@@ -155,7 +153,7 @@ export function PomodoroTimer() {
                     fill="transparent"
                 />
                 <circle
-                    className={cn("transition-stroke-dashoffset duration-300 ease-linear", {
+                    className={cn("transition-stroke-dashoffset duration-1000 ease-linear", {
                         "stroke-primary": mode === 'work',
                         "stroke-accent": mode === 'break'
                     })}
